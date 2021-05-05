@@ -1,6 +1,6 @@
 #!/bin/sh -e
 # SPDX-License-Identifier: GPL-2.0-only
-# Copyright (c) 2020 Max Rees
+# Copyright (c) 2020-2021 Max Rees
 # See LICENSE for more information.
 
 cleanup() {
@@ -12,7 +12,7 @@ always)
 	cleanup
 	;;
 on-success)
-	rc="$(cat "$CUSTOM_ENV_CI_BUILDS_DIR/af/rc" 2>/dev/null || :)"
+	rc="$(cat "$CUSTOM_ENV_CI_BUILDS_DIR/af/config/rc" 2>/dev/null || :)"
 	if [ "$rc" = "0" ]; then
 		cleanup
 	fi

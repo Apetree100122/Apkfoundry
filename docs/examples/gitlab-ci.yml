@@ -15,7 +15,7 @@ stages:
       - .gl-repos/*.pub
       - .gl-repos/*/*/APKINDEX.tar.gz
       - .gl-repos/*/*/*.apk
-      # See notes in the example build script about logging.
+      # See notes in the example build-script about logging.
       # - .gl-repos/*/*/logs/*.log
 
 .af-x86_64-build:

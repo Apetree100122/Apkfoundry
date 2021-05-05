@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
-# Copyright (c) 2019-2020 Max Rees
+# Copyright (c) 2019-2021 Max Rees
 # See LICENSE for more information.
 import collections  # defaultdict
 import configparser # ConfigParser
@@ -93,6 +93,8 @@ _DEFAULT_PROJ_CONFIG = {
         "repo.default": "", # str
         # Optional
         "rootfs.exclude": "", # list
+        "after.networking": "true",
+        "after.repo": "",
         "build.networking": "false",
         "build.on-failure": "stop", # str
         "build.only-changed-versions": "false", # bool

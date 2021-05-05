@@ -74,16 +74,17 @@ configuration file.
 Scripts
 ^^^^^^^
 
-There are three scripts that are run during the lifetime of a job: the
-bootstrap script, the refresh script, and the build script. While they
-are referred to as "scripts" here and the examples are written in POSIX
-shell, they can be any executable file that the container will be able
-to run. The scripts (and any supporting files) should be placed in a
-subdirectory of the ``.apkfoundry`` configuration directory. The name of
-this subdirectory should correspond to the name of the branch to which
-they apply. This subdirectory is known as the "branch directory". If a
-branch directory doesn't exist for the branch the job is occurring on,
-APK Foundry will fall back to using the ``master`` branch directory.
+There are four scripts that are run during the lifetime of a job: the
+bootstrap-script, the refresh-script, the build-script, and the
+after-script. While they are referred to as "scripts" here and the
+examples are written in POSIX shell, they can be any executable file
+that the container will be able to run. The scripts (and any supporting
+files) should be placed in a subdirectory of the ``.apkfoundry``
+configuration directory. The name of this subdirectory should correspond
+to the name of the branch to which they apply. This subdirectory is
+known as the "branch directory". If a branch directory doesn't exist for
+the branch the job is occurring on, APK Foundry will fall back to using
+the ``master`` branch directory.
 
 ``bootstrap``
   This script is only run once: after the initial extraction of the root
@@ -114,6 +115,22 @@ APK Foundry will fall back to using the ``master`` branch directory.
   The current working directory is the location of this ``STARTDIR``.
 
   See `<docs/examples/build.sh>`_ for an example written in POSIX shell.
+
+``after``
+  This script is run after each build, regardless of the success of the
+  build (the exit status of the build can be checked using ``$AF_RC``).
+  Two useful applications of this script are re-signing of ``.apk``
+  files using a new key, and/or deploying ``.apk`` files to official
+  repositories. ``$AF_FILELIST`` contains the name of the file listing
+  all new or changed ``.apk`` files, separated by newlines.
+
+  Optionally, ``$AF_AFTERDIR`` can be mounted to contain any
+  supplementary files that are needed. This is done according to the
+  ``--afterdir DIR`` command line option or the
+  ``AFCI_AFTERDIR=YesPlease`` environment variable. If the directory is
+  not mounted, this variable is blank.
+
+  See `<docs/examples/after.sh>`_ for an example written in POSIX shell.
 
 To use these scripts, it's important to note that the names and file
 permissions are important - namely the files must have the executable
@@ -179,6 +196,12 @@ Inside the container, the following environment variables will be set:
 
 ``AF_ARCH``
   The APK architecture currently being built.
+
+``AF_AFTERDIR``
+  The project's directory of files for use with the ``after`` script.
+  This can include such things as package signing keys for use with
+  ``af_resign_files`` and/or SSH keys for use with ``af_sync_files``. If
+  the directory is not presently mounted, this variable is blank.
 
 Container structure
 ^^^^^^^^^^^^^^^^^^^
@@ -313,6 +336,16 @@ defines some convenience functions for project use.
   No phases may be given.
 
   Only a subset of abuild options are supported.
+
+``af_resign_files PRIVKEY [PUBKEY]``
+  Re-sign all new/changed ``.apk`` files, then rebuild and re-sign their
+  corresponding APKINDEXes using ``PRIVKEY``.
+
+``af_sync_files DEST``
+  Sync all new/changed .apk files, APKINDEXes, and log files to ``DEST``
+  (which should correspond to a remote host's root-level ``REPODEST``
+  mirror folder). Exporting ``$RSYNC_RSH`` will change the behavior of
+  the underlying rsync command (e.g. connect using an SSH private key).
 
 Working example
 ^^^^^^^^^^^^^^^

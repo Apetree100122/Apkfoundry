@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
-# Copyright (c) 2019-2020 Max Rees
+# Copyright (c) 2019-2021 Max Rees
 # See LICENSE for more information.
 import argparse   # ArgumentParser, SUPPRESS
 import json       # load
@@ -361,6 +361,7 @@ class Container:
             net=False,
             setsid=True,
             chdir=None,
+            afterdir=None,
             **kwargs):
 
         root_bind = "--ro-bind" if ro_root else "--bind"
@@ -398,6 +399,10 @@ class Container:
                 ]
             if repo:
                 self.repo = repo
+            if afterdir:
+                args += [
+                    "--ro-bind", afterdir, "/af/config/afterdir",
+                ]
 
         if not skip_refresh and self.refresh():
             return 1, None
@@ -473,6 +478,7 @@ def _make_infodir(conf, opts):
         )
 
     (opts.cdir / "af/libexec").mkdir()
+    (opts.cdir / "af/config/afterdir").mkdir()
 
     if opts.cache_apk:
         (opts.cdir / "af/config/cache").symlink_to(opts.cache_apk)
@@ -503,10 +509,6 @@ def _cont_make_args(args):
         help="external source file cache directory (default: none)",
     )
     opts.add_argument("-s", "--srcdest", help=argparse.SUPPRESS)
-    opts.add_argument(
-        "--no-pubkey-copy", action="store_true",
-        help="do not copy public keys to REPODEST",
-    )
     opts.add_argument(
         "--repodest",
         help="""external package destination directory (default:
@@ -575,12 +577,7 @@ def cont_make(args):
     _make_infodir(conf, opts)
 
     cont = Container(opts.cdir)
-    rc = cont.bootstrap(
-        conf, opts.arch, script,
-        env={
-            "AF_PUBKEY_COPY": "" if opts.no_pubkey_copy else "Yes",
-        },
-    )
+    rc = cont.bootstrap(conf, opts.arch, script)
     if rc:
         return None
 

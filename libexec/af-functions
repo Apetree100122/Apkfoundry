@@ -1,4 +1,4 @@
-#!/bin/sh
+# vi: ft=sh noet
 
 # Usage: af_mkuser
 # Create the "build" user and group with the correct IDs.
@@ -28,11 +28,7 @@ af_userconf() (
 	fi
 	cp "$PACKAGER_PRIVKEY.pub" /etc/apk/keys
 
-	# We only want to make a copy of the container's key if re-signing
-	# will not occur (otherwise it is useless).
-	if [ -n "$AF_PUBKEY_COPY" ]; then
-		cp "$PACKAGER_PRIVKEY.pub" "$REPODEST"
-	fi
+	cp -p "$PACKAGER_PRIVKEY.pub" "$REPODEST"
 
 	if [ -z "$PACKAGER" ]; then
 		cat >> "$ABUILD_USERCONF" <<-EOF
@@ -153,3 +149,84 @@ af_abuild() {
 	# -d allows us to skip running builddeps twice
 	af_abuild_unpriv "$@" -d build_abuildrepo
 }
+
+# Usage: af_resign_files PRIVKEY [PUBKEY]
+# Re-sign all new/changed .apk files, then rebuild and re-sign their
+# corresponding APKINDEXes using PRIVKEY.
+af_resign_files() (
+	privkey="$1"
+	pubkey="$2"
+	[ -n "$privkey" ] || die "invalid usage"
+	[ -n "$pubkey" ] || pubkey="${privkey##*/}.pub"
+	[ -e "$AF_FILELIST" ] || exit 0
+	new_apks="$(grep '\.apk$' "$AF_FILELIST" || :)"
+	cd "$REPODEST"
+
+	msg "Re-signing packages with ${privkey##*/}..."
+	if [ -z "$new_apks" ]; then
+		msg2 "No .apk files to sign!"
+		exit 0
+	fi
+	msg2 "Found $(printf '%s\n' "$new_apks" | wc -l) .apk files to sign"
+
+	fakeroot -- "$AF_LIBEXEC"/resignapk -ik "$privkey" -p "$pubkey" -q $new_apks
+
+	for index in $(grep '/APKINDEX\.tar\.gz$' "$AF_FILELIST"); do
+		# There is a bug in APK 2.12.0 where it doesn't properly update
+		# existing indices if only the size of a package differs, so
+		# start from scratch
+		rm "$index"
+
+		repoarch="${index%/APKINDEX.tar.gz}"
+		msg "Updating and signing the $repoarch repository index..."
+		fakeroot -- "$AF_LIBEXEC"/rebuild-apkindex "$repoarch" "$privkey" "$pubkey"
+	done
+)
+
+# Usage: af_sync_files DEST
+# Sync all new/changed .apk files, APKINDEXes, and log files to DEST
+# (which should correspond to a remote host's root-level REPODEST mirror
+# folder). Exporting $RSYNC_RSH will change the behavior of the
+# underlying rsync command (e.g. connect using an SSH private key).
+af_sync_files() (
+	dest="$1"
+	[ -n "$dest" ] || exit 1
+	[ -e "$AF_FILELIST" ] || exit 0
+	host="${dest#rsync://}"
+	host="${host#*@}"
+	host="${host%%[/:]*}"
+	cd "$REPODEST"
+
+	msg "Syncing to $host..."
+	num_files="$(wc -l < "$AF_FILELIST")"
+	if [ "$num_files" -eq 0 ]; then
+		msg2 "No files to sync!"
+		exit 0
+	fi
+	msg2 "Found $num_files candidate files to sync"
+
+	set --
+	for repoarch in $(cut -d / -f 1-2 "$AF_FILELIST"); do
+		arch="${repoarch#*/}"
+		if [ "$arch" != "$AF_ARCH" ]; then
+			continue
+		fi
+		set -- "$@" "$repoarch"
+	done
+
+	rsync \
+		--recursive \
+		--relative \
+		--links \
+		--perms \
+		--chmod=D755,F664 \
+		--times \
+		--preallocate \
+		--compress \
+		--skip-compress=apk/gz \
+		--protect-args \
+		--itemize-changes \
+		-- \
+		"$@" \
+		"$dest"
+)
