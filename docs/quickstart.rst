@@ -78,6 +78,9 @@ APK Foundry: getting started
 
 #. Configure your project to support APK Foundry. See `the configution
    guide <docs/configuration.rst>`_ for details.
-#. Add ``/path/to/apkfoundry`` to your ``$PYTHONPATH``.
-#. Add ``/path/to/apkfoundry/bin`` to your ``$PATH``.
+#. Add ``/path/to/apkfoundry`` to your ``$PYTHONPATH``. This is the path
+   to the project's root directory - the one containing ``README.rst``.
+#. Add ``/path/to/apkfoundry/bin`` to your ``$PATH``. This is the
+   ``bin/`` subdirectory under the previous directory - it contains
+   ``af-chroot``, for example.
 #. Explore!
