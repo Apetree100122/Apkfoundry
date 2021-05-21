@@ -215,8 +215,8 @@ def run_graph(cont, conf, graph, opts):
         if not order:
             break
 
-        tot = len(order)
-        cur = 0
+        tot = len(order) + len(done.keys())
+        cur = len(done.keys())
 
         _log.section_start(_LOGGER, "build_order", "Build order:\n")
         for startdir in order:
@@ -224,7 +224,7 @@ def run_graph(cont, conf, graph, opts):
             _log.msg2(_LOGGER, "(%d/%d) %s", cur, tot, startdir)
         _log.section_end(_LOGGER)
 
-        cur = 0
+        cur = len(done.keys())
         for startdir in order:
             cur += 1
             _log.section_start(
