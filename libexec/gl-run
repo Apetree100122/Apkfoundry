@@ -80,7 +80,7 @@ def build_script(script, env):
     except FileNotFoundError:
         pass
     env.tmp.symlink_to("/tmp")
-    (env.aportsdir / ".gl-repos").symlink_to("../repos")
+    (env.aportsdir / ".gl-repos").symlink_to("../config/repodest")
 
     broken = False
     for i in ("AF_PRIVKEY", "AF_PRIVKEY_B64", "AF_PUBKEY"):
