@@ -279,6 +279,7 @@ def run_graph(cont, conf, graph, opts):
 
                 elif action == FailureAction.IGNORE:
                     _LOGGER.info("Ignoring error and continuing")
+                    continue
 
                 break
 
