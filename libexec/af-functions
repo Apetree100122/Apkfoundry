@@ -41,7 +41,7 @@ af_userconf() (
 # Redirect standard output and standard error to a log file named
 # $REPODEST/$repo/$CARCH/logs/$pkgname-$pkgver-r$pkgrel.log depending on
 # the APKBUILD in the current working directory. A symlink named
-# /af/build/log will also point to this log file.
+# latest.log will also point to this log file.
 #
 # -a        append to .log file instead of overwriting. Do not enable
 #           this if the project has container.persistent-repodest is
@@ -57,16 +57,16 @@ af_loginit() {
 	esac
 	done
 	shift "$((OPTIND - 1))"
+	repo="${PWD%/*}"
+	repo="${repo##*/}"
+	logdir="$REPODEST/$repo/$CARCH/logs"
+	mkdir -p "$logdir"
 
 	(
 		set -e
-		repo="${PWD%/*}"
-		repo="${repo##*/}"
-		logdir="$REPODEST/$repo/$CARCH/logs"
-		mkdir -p "$logdir"
-		rm -f /af/build/log
+		rm -f "$logdir/latest.log"
 		. ./APKBUILD
-		ln -sr "$logdir/$pkgname-$pkgver-r$pkgrel.log" /af/build/log
+		ln -sr "$logdir/$pkgname-$pkgver-r$pkgrel.log" "$logdir/latest.log"
 	)
 
 	if [ -n "$tee" ]; then
@@ -74,14 +74,14 @@ af_loginit() {
 		rm -f "$pipe"
 		mkfifo -m 600 "$pipe"
 		(
-			tee $append /af/build/log < "$pipe" || :
+			tee $append "$logdir/latest.log" < "$pipe" || :
 			rm -f "$pipe"
 		) &
 		exec >"$pipe" 2>&1
 	elif [ -n "$append" ]; then
-		exec >>/af/build/log 2>&1
+		exec >>"$logdir/latest.log" 2>&1
 	else
-		exec >/af/build/log 2>&1
+		exec >"$logdir/latest.log" 2>&1
 	fi
 }
 

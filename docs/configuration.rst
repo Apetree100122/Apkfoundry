@@ -308,7 +308,7 @@ defines some convenience functions for project use.
   Redirect standard output and standard error to a log file named
   ``$REPODEST/$repo/$CARCH/logs/$pkgname-$pkgver-r$pkgrel.log``
   depending on the APKBUILD in the current working directory. A symlink
-  named ``/af/build/log`` will also point to this log file. Useful for
+  named ``latest.log`` will also point to this log file. Useful for
   the ``build`` script.
 
   Options:
