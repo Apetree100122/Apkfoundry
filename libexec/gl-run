@@ -147,7 +147,6 @@ def build_script(script, env):
     args = [str(i) for i in args]
     rc = apkfoundry.build.buildrepo(args)
     (env.cdir / "af/config/rc").write_text(str(rc))
-    env.tmp.unlink()
     return rc
 
 def after_script(script, env):
