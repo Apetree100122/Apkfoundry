@@ -202,6 +202,11 @@ def run_graph(cont, conf, graph, opts):
         )
         on_failure = FailureAction.STOP
 
+    for i in initial:
+        if i not in graph.graph:
+            _LOGGER.error("%s/APKBUILD does not exist!", i)
+            return 1
+
     while True:
         order = [
             i for i in graph.topological_sort()
